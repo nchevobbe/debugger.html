@@ -683,14 +683,16 @@ const selectors = {
   expressionNode: i =>
     `.expressions-list .expression-container:nth-child(${i}) .object-label`,
   expressionValue: i =>
-    `.expressions-list .expression-container:nth-child(${i}) .object-value`,
+    `.expressions-list .expression-container:nth-child(${i}) .object-delimiter + *`,
   expressionClose: i =>
     `.expressions-list .expression-container:nth-child(${i}) .close`,
   expressionNodes: ".expressions-list .tree-node",
   scopesHeader: ".scopes-pane ._header",
   breakpointItem: i => `.breakpoints-list .breakpoint:nth-child(${i})`,
+  scopeObjectInspector: `.scopes-list .tree`,
   scopeNode: i => `.scopes-list .tree-node:nth-child(${i}) .object-label`,
-  scopeValue: i => `.scopes-list .tree-node:nth-child(${i}) .object-value`,
+  scopeValue: i =>
+    `.scopes-list .tree-node:nth-child(${i}) .object-delimiter + *`,
   frame: i => `.frames ul li:nth-child(${i})`,
   frames: ".frames ul li",
   gutter: i => `.CodeMirror-code *:nth-child(${i}) .CodeMirror-linenumber`,
@@ -813,4 +815,22 @@ function toggleScopes(dbg) {
 function getCM(dbg) {
   const el = dbg.win.document.querySelector(".CodeMirror");
   return el.CodeMirror;
+}
+
+/**
+* Returns a promise that resolves when the node passed as an argument mutate
+* according to the passed configuration.
+*
+* @param {Node} node - The node to observe mutations on.
+* @param {Object} observeConfig - A configuration object for MutationObserver.observe.
+* @returns {Promise}
+*/
+function waitForNodeMutation(node, observeConfig = {}) {
+  return new Promise(resolve => {
+    const observer = new MutationObserver(mutations => {
+      resolve(mutations);
+      observer.disconnect();
+    });
+    observer.observe(node, observeConfig);
+  });
 }

@@ -10,9 +10,12 @@ function getScopeNodeValue(dbg, index) {
 }
 
 function expandNode(dbg, index) {
-  let onLoadProperties = onLoadObjectProperties(dbg);
+  const oi = findElement(dbg, "scopeObjectInspector", index);
+  let onOiMutation = waitForNodeMutation(oi, {
+    childList: true
+  });
   clickElement(dbg, "scopeNode", index);
-  return onLoadProperties;
+  return onOiMutation;
 }
 
 function toggleScopes(dbg) {
