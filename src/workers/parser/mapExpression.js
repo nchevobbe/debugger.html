@@ -4,6 +4,7 @@
 
 // @flow
 
+import { parseConsoleScript } from "./utils/ast";
 import mapOriginalExpression from "./mapOriginalExpression";
 import mapExpressionBindings from "./mapBindings";
 import mapTopLevelAwait from "./mapAwaitExpression";
@@ -30,22 +31,36 @@ export default function mapExpression(
     originalExpression: false
   };
 
+  let ast;
+  const getAst = () => {
+    if (ast) {
+      return ast;
+    }
+
+    try {
+      ast = parseConsoleScript(expression);
+    } catch (e) {
+      // no need to do anything
+    }
+    return ast;
+  };
+
   try {
-    if (mappings) {
+    if (mappings && getAst()) {
       const beforeOriginalExpression = expression;
-      expression = mapOriginalExpression(expression, mappings);
+      expression = mapOriginalExpression(expression, getAst(), mappings);
       mapped.originalExpression = beforeOriginalExpression !== expression;
     }
 
-    if (shouldMapBindings) {
+    if (shouldMapBindings && getAst()) {
       const beforeBindings = expression;
-      expression = mapExpressionBindings(expression, bindings);
+      expression = mapExpressionBindings(expression, getAst(), bindings);
       mapped.bindings = beforeBindings !== expression;
     }
 
     if (shouldMapAwait) {
       const beforeAwait = expression;
-      expression = mapTopLevelAwait(expression);
+      expression = mapTopLevelAwait(expression, getAst());
       mapped.await = beforeAwait !== expression;
     }
   } catch (e) {

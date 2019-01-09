@@ -3,6 +3,7 @@
  * file, You can obtain one at <http://mozilla.org/MPL/2.0/>. */
 
 import mapOriginalExpression from "../mapOriginalExpression";
+import { parseConsoleScript } from "../utils/ast";
 import { format } from "prettier";
 
 const formatOutput = output =>
@@ -10,9 +11,12 @@ const formatOutput = output =>
     parser: "babylon"
   });
 
+const mapOgExpression = (expression, mappings) =>
+  mapOriginalExpression(expression, parseConsoleScript(expression), mappings);
+
 describe("mapOriginalExpression", () => {
   it("simple", () => {
-    const generatedExpression = mapOriginalExpression("a + b;", {
+    const generatedExpression = mapOgExpression("a + b;", {
       a: "foo",
       b: "bar"
     });
@@ -20,14 +24,14 @@ describe("mapOriginalExpression", () => {
   });
 
   it("this", () => {
-    const generatedExpression = mapOriginalExpression("this.prop;", {
+    const generatedExpression = mapOgExpression("this.prop;", {
       this: "_this"
     });
     expect(generatedExpression).toEqual("_this.prop;");
   });
 
   it("member expressions", () => {
-    const generatedExpression = mapOriginalExpression("a + b", {
+    const generatedExpression = mapOgExpression("a + b", {
       a: "_mod.foo",
       b: "_mod.bar"
     });
@@ -36,7 +40,7 @@ describe("mapOriginalExpression", () => {
 
   it("block", () => {
     // todo: maybe wrap with parens ()
-    const generatedExpression = mapOriginalExpression("{a}", {
+    const generatedExpression = mapOgExpression("{a}", {
       a: "_mod.foo",
       b: "_mod.bar"
     });
@@ -44,7 +48,7 @@ describe("mapOriginalExpression", () => {
   });
 
   it("skips codegen with no mappings", () => {
-    const generatedExpression = mapOriginalExpression("a + b", {
+    const generatedExpression = mapOgExpression("a + b", {
       a: "a",
       c: "_c"
     });
@@ -52,7 +56,7 @@ describe("mapOriginalExpression", () => {
   });
 
   it("object destructuring", () => {
-    const generatedExpression = mapOriginalExpression("({ a } = { a: 4 })", {
+    const generatedExpression = mapOgExpression("({ a } = { a: 4 })", {
       a: "_mod.foo"
     });
 
@@ -62,7 +66,7 @@ describe("mapOriginalExpression", () => {
   });
 
   it("nested object destructuring", () => {
-    const generatedExpression = mapOriginalExpression(
+    const generatedExpression = mapOgExpression(
       "({ a: { b, c } } = { a: 4 })",
       {
         a: "_mod.foo",
@@ -76,7 +80,7 @@ describe("mapOriginalExpression", () => {
   });
 
   it("shadowed bindings", () => {
-    const generatedExpression = mapOriginalExpression(
+    const generatedExpression = mapOgExpression(
       "window.thing = function fn(){ var a; a; b; }; a; b; ",
       {
         a: "_a",
